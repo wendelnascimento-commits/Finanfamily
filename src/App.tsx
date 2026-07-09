@@ -384,15 +384,15 @@ export default function App() {
       </div>
 
       {/* Main UI Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-150 dark:border-slate-850 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md transition-colors duration-200 print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-emerald-500 text-slate-950 rounded-xl shadow-xs">
-              <Landmark size={18} />
+      <header className="sticky top-0 z-40 w-full border-b border-slate-150 dark:border-slate-850 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl transition-colors duration-200 print:hidden shadow-sm">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-10 h-20 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-emerald-500 text-slate-950 rounded-2xl shadow-xs">
+              <Landmark size={20} />
             </div>
             <div>
-              <span className="text-sm font-black text-slate-900 dark:text-white tracking-widest leading-none block uppercase">FinanFamily</span>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Orçamento Familiar & Investimentos</span>
+              <span className="text-base font-black text-slate-900 dark:text-white tracking-widest leading-tight block uppercase">FinanFamily</span>
+              <span className="text-[12px] text-slate-400 font-bold uppercase tracking-wider">Orçamento Familiar & Investimentos</span>
             </div>
           </div>
 
@@ -470,13 +470,13 @@ export default function App() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all print:hidden">
+      <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-10 py-10 transition-all print:hidden">
         
         {/* Layout Grid: Content Areas */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-10">
           
           {/* Left Sidebar: Controls family members & fast profile settings */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <FamilySharing
               members={members}
               activeMemberId={activeMemberId}
@@ -487,13 +487,13 @@ export default function App() {
           </div>
 
           {/* Right Area: Interactive Tabs & Charts */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-8 space-y-6">
             
             {/* Visual Tab Buttons */}
-            <div className="flex border-b border-slate-150 dark:border-slate-800/80 overflow-x-auto gap-5 scrollbar-none pb-0.5">
+            <div className="flex flex-wrap border-b border-slate-150 dark:border-slate-800/80 overflow-x-auto gap-4 scrollbar-none pb-3">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`py-2.5 text-[11px] font-black uppercase tracking-widest transition-all border-b-2 shrink-0 ${
+                className={`py-3 px-4 text-[12px] font-black uppercase tracking-widest transition-all border-b-2 shrink-0 rounded-t-2xl ${
                   activeTab === 'overview'
                     ? 'border-emerald-500 text-emerald-500 dark:border-emerald-400 dark:text-emerald-400'
                     : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
@@ -533,7 +533,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveTab('banks')}
-                className={`py-2.5 text-[11px] font-black uppercase tracking-widest transition-all border-b-2 shrink-0 ${
+                className={`py-3 px-4 text-[12px] font-black uppercase tracking-widest transition-all border-b-2 shrink-0 rounded-t-2xl ${
                   activeTab === 'banks'
                     ? 'border-emerald-500 text-emerald-500 dark:border-emerald-400 dark:text-emerald-400'
                     : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
