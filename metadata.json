@@ -1,0 +1,6 @@
+{
+  "name": "FinanFamily",
+  "description": "Controle de gastos, investimentos e metas financeiras com orçamento compartilhado, modo noturno, exportação e dicas inteligentes de IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
