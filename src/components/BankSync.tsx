@@ -331,6 +331,77 @@ export default function BankSync({
     setShowPoolForm(false);
   };
 
+  const cleanTransactionName = (desc: string): string => {
+    let name = desc;
+    
+    // Convert to upper case for uniform replacement, then convert back to title case
+    name = name.toUpperCase();
+    
+    // Remove common transaction type prefixes/markers in Portuguese bank statements
+    const prefixesToRemove = [
+      /COMPRA\s+(?:DE\s+)?(?:CARTAO|CRÉDITO|DEBITO|DÉBITO)?\s*(?:-)?/gi,
+      /PAGAMENTO\s+(?:DE\s+)?(?:BOLETO|CONTA|TITULO|PARCELA)?\s*(?:-)?/gi,
+      /PGTO\s+(?:DE\s+)?/gi,
+      /TRANSF\s*(?:\.)?\s*(?:ENVIADA|RECEBIDA)?\s*(?:PIX|TED|DOC)?\s*(?:-)?/gi,
+      /PIX\s+(?:ENVIADO|RECEBIDO|TRANSF|PAGAMENTO)?\s*(?:PARA|DE|-)?/gi,
+      /TED\s+(?:ENVIADA|RECEBIDA)?\s*(?:PARA|DE|-)?/gi,
+      /DOC\s+(?:ENVIADO|RECEBIDO)?\s*(?:PARA|DE|-)?/gi,
+      /DEPOSITO\s+(?:ONLINE|EM|DINHEIRO|CHEQUE)?/gi,
+      /ESTORNO\s+(?:DE\s+)?(?:COMPRA|TRANSF|PIX|PAGAMENTO)?/gi,
+      /SAIDA\s+(?:PIX|TED|DOC|CARTAO)?/gi,
+      /ENTRADA\s+(?:PIX|TED|DOC|CARTAO)?/gi,
+      /REMETENTE\s*(?::)?/gi,
+      /FAVORECIDO\s*(?::)?/gi,
+      /DESTINATARIO\s*(?::)?/gi,
+      /SAQUE\s+(?:BANCO24HORAS|ATM|TERMINAL)?/gi,
+      /LANÇAMENTO\s+(?:DE\s+)?/gi,
+      /AUTOATENDIMENTO/gi,
+      /REMET\s*(?:\.)?\s*(?:-)?/gi,
+      /DE\s*:\s*/gi,
+      /PARA\s*:\s*/gi,
+      /SALDO\s*(?:ATUAL|DIA|ANTERIOR)?(?:\s*:)?/gi,
+      /VALOR(?:\s*:)?/gi,
+      /R\$/gi,
+    ];
+
+    prefixesToRemove.forEach(regex => {
+      name = name.replace(regex, ' ');
+    });
+
+    // Remove any monetary values, balances, or decimal numbers (e.g. 1.250,00 or 150.00 or 85,00 or 85.0)
+    name = name.replace(/\b\d+[\.,]\d+[\.,]\d+\b/g, ' '); // numbers with multiple separators like 1.250,00 or 1,250.00
+    name = name.replace(/\b\d+[\.,]\d+\b/g, ' ');         // standard decimals like 150,00 or 85.00
+    name = name.replace(/\b\d+\b/g, ' ');                 // any remaining lone integers like 1234 or 1500
+
+    // Remove noise like document numbers (CNPJ, CPF), bank IDs, authorization codes, dates, times, dots/dashes
+    name = name
+      .replace(/\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g, ' ') // CNPJ
+      .replace(/\d{3}\.\d{3}\.\d{3}-\d{2}/g, ' ') // CPF
+      .replace(/\b\d{4,}\b/g, ' ') // Long numeric sequence (authorization codes, IDs)
+      .replace(/\b\d{2}:\d{2}(?::\d{2})?\b/g, ' ') // Time stamp
+      .replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, ' ') // Full date
+      .replace(/\b\d{2}\/\d{2}\b/g, ' ') // Month/Day date
+      .replace(/[*#]/g, ' ') // Star or hash marks
+      .replace(/[|;\-_+()]/g, ' ') // Other symbols
+      .replace(/\s+/g, ' ') // Duplicate whitespaces
+      .trim();
+
+    if (name.length < 2) {
+      // Clean up punctuation anyway
+      return desc.replace(/[|;\-_+()]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Capitalize each word properly (Title Case), but keeping things like "iFood" or other brand specific styles if matched
+    return name
+      .toLowerCase()
+      .split(' ')
+      .map(word => {
+        if (word === 'ifood') return 'iFood';
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+  };
+
   const handleStartEditPool = (item: PendingBankTx) => {
     setEditingPoolId(item.id);
     setPoolDesc(item.description);
@@ -465,18 +536,12 @@ export default function BankSync({
         }
       }
 
-      let description = lineWithoutDate.replace(rawAmountStr, ' ').trim();
-      description = description
-        .replace(/[|;\-_+]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .replace(/r\$/gi, '')
-        .trim();
+      let rawDescription = lineWithoutDate.replace(rawAmountStr, ' ').trim();
+      let description = cleanTransactionName(rawDescription);
 
       if (description.length < 3) {
         description = isIncome ? 'Transferência Recebida' : 'Gasto por Cartão/PIX';
       }
-
-      description = description.charAt(0).toUpperCase() + description.slice(1);
 
       // Automatically categorize based on description words
       let category = 'Outros';
@@ -532,7 +597,8 @@ export default function BankSync({
             const isNegative = raw.includes('-') || lowercaseLine.includes('debito') || lowercaseLine.includes('pgto') || lowercaseLine.includes('compra') || lowercaseLine.includes('tarifa') || lowercaseLine.includes('pagamento') || lowercaseLine.includes('saída');
             const isPositive = raw.includes('+') || lowercaseLine.includes('receb') || lowercaseLine.includes('credito') || lowercaseLine.includes('salario') || lowercaseLine.includes('deposito') || lowercaseLine.includes('entrada') || lowercaseLine.includes('estorno');
 
-            let description = trimmed.replace(raw, '').replace(/[|;\-_+]/g, ' ').replace(/\s+/g, ' ').replace(/r\$/gi, '').trim();
+            let rawDescription = trimmed.replace(raw, '').trim();
+            let description = cleanTransactionName(rawDescription);
             if (description.length < 3) {
               description = isPositive ? 'Receita Identificada' : 'Despesa Identificada';
             }
@@ -549,7 +615,7 @@ export default function BankSync({
             }
 
             onAddToSyncPool({
-              description: description.charAt(0).toUpperCase() + description.slice(1),
+              description: description,
               amount: value,
               category,
               type: isPositive ? 'income' : 'expense',
@@ -1671,9 +1737,10 @@ export default function BankSync({
                     <tr className="border-b border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-[9px] font-black uppercase tracking-wider text-slate-450 dark:text-slate-400">
                       <th className="py-2.5 px-4">Banco</th>
                       <th className="py-2.5 px-4">Data</th>
-                      <th className="py-2.5 px-4">Descrição</th>
+                      <th className="py-2.5 px-4">Tipo de Transação</th>
+                      <th className="py-2.5 px-4">Nome (Apenas o nome)</th>
                       <th className="py-2.5 px-4">Categoria</th>
-                      <th className="py-2.5 px-4 text-right">Valor</th>
+                      <th className="py-2.5 px-4 text-right">Valor da Transação</th>
                       <th className="py-2.5 px-4 text-center">Ações</th>
                     </tr>
                   </thead>
@@ -1690,6 +1757,17 @@ export default function BankSync({
                           </td>
                           <td className="py-2.5 px-4 text-slate-500 font-mono text-[11px]">
                             {item.date}
+                          </td>
+                          <td className="py-2.5 px-4">
+                            {item.type === 'income' ? (
+                              <span className="px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/25 text-emerald-600 dark:text-emerald-450">
+                                Receita
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/25 text-rose-600 dark:text-rose-450">
+                                Despesa
+                              </span>
+                            )}
                           </td>
                           <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-slate-100">
                             {item.description}
