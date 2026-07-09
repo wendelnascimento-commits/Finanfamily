@@ -49,7 +49,7 @@ export default function TransactionList({
   const [editUserRef, setEditUserRef] = useState('');
 
   // Categories list
-  const categories = ['Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Investimentos', 'Salário', 'Saúde', 'Compras', 'Assinaturas', 'Outros'];
+  const categories = ['Alimentação', 'Abastecimento', 'Moradia', 'Lazer', 'Investimentos', 'Salário', 'Saúde', 'Compras', 'Assinaturas', 'Outros'];
 
   // Apply filters
   const filteredTransactions = transactions.filter((t) => {
@@ -72,6 +72,7 @@ export default function TransactionList({
       amount: parsedAmount,
       category,
       type,
+      paymentMethod: 'pix',
       date,
       userRef,
     });
@@ -102,6 +103,7 @@ export default function TransactionList({
       amount: parsedAmount,
       category: editCategory,
       type: editType,
+      paymentMethod: 'pix',
       date: editDate,
       userRef: editUserRef,
     });
@@ -227,8 +229,8 @@ export default function TransactionList({
               {[
                 { label: '🍔 iFood', desc: 'iFood Jantar', amt: '85.00', cat: 'Alimentação', t: 'expense' },
                 { label: '🛒 Supermercado', desc: 'Rancho do Mês', amt: '350.00', cat: 'Alimentação', t: 'expense' },
-                { label: '🚗 Uber', desc: 'Corrida Uber', amt: '24.50', cat: 'Transporte', t: 'expense' },
-                { label: '⛽ Posto Shell', desc: 'Combustível Carro', amt: '180.00', cat: 'Transporte', t: 'expense' },
+                { label: '🚗 Uber', desc: 'Corrida Uber', amt: '24.50', cat: 'Abastecimento', t: 'expense' },
+                { label: '⛽ Posto Shell', desc: 'Combustível Carro', amt: '180.00', cat: 'Abastecimento', t: 'expense' },
                 { label: '🍿 Lazer / Bar', desc: 'Lazer Fim de Semana', amt: '75.00', cat: 'Lazer', t: 'expense' },
                 { label: '🎬 Netflix / Prime', desc: 'Assinaturas de Stream', amt: '44.90', cat: 'Assinaturas', t: 'expense' },
                 { label: '💊 Drogaria', desc: 'Remédios e Farmácia', amt: '50.00', cat: 'Saúde', t: 'expense' },

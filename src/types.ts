@@ -5,6 +5,7 @@ export interface Transaction {
   amount: number;
   category: string;
   type: 'income' | 'expense';
+  paymentMethod?: 'pix' | 'card-debit';
   bankSynced: boolean;
   bankName?: string;
   userRef: string; // The family member ID who made this transaction
@@ -68,6 +69,7 @@ export interface PendingBankTx {
   amount: number;
   category: string;
   type: 'income' | 'expense';
+  paymentMethod?: 'pix' | 'card-debit';
   date: string;
   bankId: string;
 }

@@ -60,6 +60,7 @@ export default function BankSync({
   const [poolAmount, setPoolAmount] = useState('');
   const [poolCategory, setPoolCategory] = useState('Alimentação');
   const [poolType, setPoolType] = useState<'income' | 'expense'>('expense');
+  const [poolPaymentMethod, setPoolPaymentMethod] = useState<'pix' | 'card-debit'>('pix');
   const [poolDate, setPoolDate] = useState(new Date().toISOString().split('T')[0]);
   const [poolBankId, setPoolBankId] = useState('nubank');
 
@@ -152,7 +153,31 @@ export default function BankSync({
     { id: 'santander', name: 'Santander', logoColor: 'bg-red-700' },
   ];
 
-  const categories = ['Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Investimentos', 'Salário', 'Saúde', 'Compras', 'Assinaturas', 'Outros'];
+  const categories = ['Alimentação', 'Abastecimento', 'Moradia', 'Lazer', 'Investimentos', 'Salário', 'Saúde', 'Compras', 'Assinaturas', 'Outros'];
+
+  const formatPaymentMethod = (paymentMethod?: 'pix' | 'card-debit') => {
+    if (paymentMethod === 'card-debit') return 'Cartão de Débito';
+    return 'Pix';
+  };
+
+  const inferPaymentMethod = (text: string): 'pix' | 'card-debit' => {
+    const normalized = text.toLowerCase();
+    if (
+      normalized.includes('no débito') ||
+      normalized.includes('no debito') ||
+      normalized.includes('cartão de débito') ||
+      normalized.includes('cartao de debito') ||
+      normalized.includes('cartão débito') ||
+      normalized.includes('cartao debito') ||
+      normalized.includes('cartão') ||
+      normalized.includes('cartao') ||
+      normalized.includes('débito') ||
+      normalized.includes('debito')
+    ) {
+      return 'card-debit';
+    }
+    return 'pix';
+  };
 
   const handleConnect = (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,6 +274,7 @@ export default function BankSync({
       amount: item.amount,
       category: item.category,
       type: item.type,
+      paymentMethod: item.paymentMethod,
       bankSynced: true,
       bankName: bankName,
       userRef: activeMemberId,
@@ -276,6 +302,7 @@ export default function BankSync({
         amount: item.amount,
         category: item.category,
         type: item.type,
+        paymentMethod: item.paymentMethod,
         bankSynced: true,
         bankName: bankName,
         userRef: activeMemberId,
@@ -304,6 +331,7 @@ export default function BankSync({
       amount: parsedAmount,
       category: poolCategory,
       type: poolType,
+      paymentMethod: poolPaymentMethod,
       date: poolDate,
       bankId: poolBankId,
     };
@@ -328,6 +356,7 @@ export default function BankSync({
     // Reset Form
     setPoolDesc('');
     setPoolAmount('');
+    setPoolPaymentMethod('pix');
     setShowPoolForm(false);
   };
 
@@ -342,6 +371,9 @@ export default function BankSync({
       /COMPRA\s+(?:DE\s+)?(?:CARTAO|CRÉDITO|DEBITO|DÉBITO)?\s*(?:-)?/gi,
       /PAGAMENTO\s+(?:DE\s+)?(?:BOLETO|CONTA|TITULO|PARCELA)?\s*(?:-)?/gi,
       /PGTO\s+(?:DE\s+)?/gi,
+      /NO\s+(?:DÉBITO|DEBITO)\s*/gi,
+      /(?:CARTAO|CARTÃO)\s+(?:DE\s+)?(?:DÉBITO|DEBITO)\s*/gi,
+      /(?:DÉBITO|DEBITO)\s*/gi,
       /TRANSF\s*(?:\.)?\s*(?:ENVIADA|RECEBIDA)?\s*(?:PIX|TED|DOC)?\s*(?:-)?/gi,
       /PIX\s+(?:ENVIADO|RECEBIDO|TRANSF|PAGAMENTO)?\s*(?:PARA|DE|-)?/gi,
       /TED\s+(?:ENVIADA|RECEBIDA)?\s*(?:PARA|DE|-)?/gi,
@@ -408,6 +440,7 @@ export default function BankSync({
     setPoolAmount(item.amount.toString());
     setPoolCategory(item.category);
     setPoolType(item.type);
+    setPoolPaymentMethod(item.paymentMethod || 'pix');
     setPoolDate(item.date);
     setPoolBankId(item.bankId);
     setShowPoolForm(true);
@@ -538,6 +571,7 @@ export default function BankSync({
 
       let rawDescription = lineWithoutDate.replace(rawAmountStr, ' ').trim();
       let description = cleanTransactionName(rawDescription);
+      const paymentMethod = inferPaymentMethod(trimmed);
 
       if (description.length < 3) {
         description = isIncome ? 'Transferência Recebida' : 'Gasto por Cartão/PIX';
@@ -548,8 +582,8 @@ export default function BankSync({
       const lowercaseText = description.toLowerCase();
       if (lowercaseText.includes("ifood") || lowercaseText.includes("restaurante") || lowercaseText.includes("almoco") || lowercaseText.includes("jantar") || lowercaseText.includes("comer") || lowercaseText.includes("padaria") || lowercaseText.includes("lanche") || lowercaseText.includes("pizza") || lowercaseText.includes("burguer") || lowercaseText.includes("supermercado") || lowercaseText.includes("carrefour") || lowercaseText.includes("pao de acucar") || lowercaseText.includes("extra")) {
         category = 'Alimentação';
-      } else if (lowercaseText.includes("uber") || lowercaseText.includes("combustivel") || lowercaseText.includes("posto") || lowercaseText.includes("gasolina") || lowercaseText.includes("onibus") || lowercaseText.includes("metro") || lowercaseText.includes("carro") || lowercaseText.includes("99app") || lowercaseText.includes("taxi") || lowercaseText.includes("shell")) {
-        category = 'Transporte';
+      } else if (lowercaseText.includes("uber") || lowercaseText.includes("combustivel") || lowercaseText.includes("posto") || lowercaseText.includes("gasolina") || lowercaseText.includes("onibus") || lowercaseText.includes("metro") || lowercaseText.includes("carro") || lowercaseText.includes("99app") || lowercaseText.includes("taxi") || lowercaseText.includes("shell") || lowercaseText.includes("abastecimento")) {
+        category = 'Abastecimento';
       } else if (lowercaseText.includes("aluguel") || lowercaseText.includes("condominio") || lowercaseText.includes("luz") || lowercaseText.includes("agua") || lowercaseText.includes("internet") || lowercaseText.includes("energia") || lowercaseText.includes("gas")) {
         category = 'Moradia';
       } else if (lowercaseText.includes("cinema") || lowercaseText.includes("jogo") || lowercaseText.includes("festa") || lowercaseText.includes("cerveja") || lowercaseText.includes("bar") || lowercaseText.includes("teatro") || lowercaseText.includes("show")) {
@@ -571,6 +605,7 @@ export default function BankSync({
         amount,
         category,
         type: isIncome ? 'income' : 'expense',
+        paymentMethod,
         date: txDate,
         bankId,
       });
@@ -599,6 +634,7 @@ export default function BankSync({
 
             let rawDescription = trimmed.replace(raw, '').trim();
             let description = cleanTransactionName(rawDescription);
+            const paymentMethod = inferPaymentMethod(trimmed);
             if (description.length < 3) {
               description = isPositive ? 'Receita Identificada' : 'Despesa Identificada';
             }
@@ -608,8 +644,8 @@ export default function BankSync({
             const lowercaseText = description.toLowerCase();
             if (lowercaseText.includes("ifood") || lowercaseText.includes("restaurante") || lowercaseText.includes("supermercado")) {
               category = 'Alimentação';
-            } else if (lowercaseText.includes("uber") || lowercaseText.includes("combustivel") || lowercaseText.includes("posto") || lowercaseText.includes("shell")) {
-              category = 'Transporte';
+            } else if (lowercaseText.includes("uber") || lowercaseText.includes("combustivel") || lowercaseText.includes("posto") || lowercaseText.includes("shell") || lowercaseText.includes("abastecimento")) {
+              category = 'Abastecimento';
             } else if (lowercaseText.includes("cinema") || lowercaseText.includes("cerveja") || lowercaseText.includes("bar")) {
               category = 'Lazer';
             }
@@ -619,6 +655,7 @@ export default function BankSync({
               amount: value,
               category,
               type: isPositive ? 'income' : 'expense',
+              paymentMethod,
               date: new Date().toISOString().split('T')[0],
               bankId,
             });
@@ -1165,22 +1202,6 @@ export default function BankSync({
               Anexar Extrato (PDF/TXT)
             </button>
 
-            <button
-              onClick={() => {
-                setShowWhatsAppArea(!showWhatsAppArea);
-                setShowPasteArea(false);
-                setShowPoolForm(false);
-                setShowUploadArea(false);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border cursor-pointer ${
-                showWhatsAppArea
-                  ? 'bg-teal-500 text-slate-950 border-teal-500/25 animate-none'
-                  : 'bg-teal-500/10 text-teal-500 hover:bg-teal-500/20 border-teal-500/20'
-              }`}
-            >
-              <MessageSquare size={12} />
-              Importador WhatsApp 📱
-            </button>
           </div>
         </div>
 
@@ -1649,14 +1670,26 @@ export default function BankSync({
               </div>
 
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tipo</label>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Raiz</label>
                 <select
                   value={poolType}
                   onChange={(e) => setPoolType(e.target.value as 'income' | 'expense')}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="expense">Despesa (Débito)</option>
-                  <option value="income">Receita (Crédito)</option>
+                  <option value="expense">Despesa</option>
+                  <option value="income">Receita</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Tipo de Transação</label>
+                <select
+                  value={poolPaymentMethod}
+                  onChange={(e) => setPoolPaymentMethod(e.target.value as 'pix' | 'card-debit')}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-white focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="pix">Pix</option>
+                  <option value="card-debit">Cartão de Débito</option>
                 </select>
               </div>
 
@@ -1737,6 +1770,7 @@ export default function BankSync({
                     <tr className="border-b border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 text-[9px] font-black uppercase tracking-wider text-slate-450 dark:text-slate-400">
                       <th className="py-2.5 px-4">Banco</th>
                       <th className="py-2.5 px-4">Data</th>
+                      <th className="py-2.5 px-4">Raiz</th>
                       <th className="py-2.5 px-4">Tipo de Transação</th>
                       <th className="py-2.5 px-4">Nome (Apenas o nome)</th>
                       <th className="py-2.5 px-4">Categoria</th>
@@ -1768,6 +1802,11 @@ export default function BankSync({
                                 Despesa
                               </span>
                             )}
+                          </td>
+                          <td className="py-2.5 px-4">
+                            <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                              {formatPaymentMethod(item.paymentMethod)}
+                            </span>
                           </td>
                           <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-slate-100">
                             {item.description}
